@@ -67,7 +67,7 @@ This organization closely reflected a **real enterprise IT project**.
 
 - 🖥️ **EVE-NG lab**: topology and configs available in this repository  
 - 📄 **IP addressing plan**: `/addressing`  
-- ⚙️ **Network configurations**: `/configs`  
+- ⚙️ **Network configurations**: `eve-ng/configs`  
 
 ---
 
@@ -76,7 +76,3 @@ This organization closely reflected a **real enterprise IT project**.
 I am currently looking for a **16-week internship in Networks & Systems**, starting **February 9th, 2026**.
 
 ---
-
-## 🙏 Acknowledgements
-
-Thanks to our professors and supervisors for their guidance and for providing a learning environment inspired by **WorldSkills standards**.
