@@ -1,0 +1,117 @@
+!
+hostname CORESW1
+!
+no ip domain-lookup 
+
+vtp domain wsl2025.org
+vtp mode server
+vtp version 2
+vtp password P@ssw0rd
+
+
+vlan 10
+ name Servers
+vlan 20
+ name Clients
+vlan 30
+ name DMZ
+vlan 99
+ name Management
+vlan 100
+ name COREDGE1
+vlan 200
+ name COREDGE2
+vlan 300
+ name IBGP
+vlan 666
+ name Blackhole
+
+
+
+ !ACTIVER LAG 
+interface range e0/1-2
+ channel-group 1 mode active
+ no shut
+exit
+
+ interface Port-channel1
+ description Trunk LAG to CORESW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99,300
+
+
+  !LIEN PARA EDGE1
+interface e0/0
+ description Trunk  to EDGE1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 30,100,300
+ no shut
+
+ !LIEN PARA ACCSW1
+interface e0/3
+ description Trunk  to ACCSW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+
+ !LIEN PARA ACCSW2
+interface e1/0
+ description Trunk  to ACCSW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+
+
+
+
+ !CONFIG HSRP
+ !DEBUG (n'est pas oublier de mettre no shut sur les interface vlan)
+ !show ip interface brief | include Vlan20|Vlan99
+ !show standby brief
+ ! VLAN 10
+interface Vlan10
+ip address 10.9.10.10 255.255.255.224
+standby 10 ip 10.9.10.30
+standby 10 priority 110
+standby 10 preempt
+no shut
+
+! VLAN 20
+interface Vlan20
+ ip address 10.9.20.10 255.255.254.0
+ standby 20 ip 10.9.21.254
+ standby 20 priority 110
+ standby 20 preempt
+ no shut
+
+! VLAN 99
+interface Vlan99
+ ip address 10.9.99.10 255.255.255.0
+ standby 99 ip 10.9.99.254
+ standby 99 priority 110
+ standby 99 preempt
+ no shut
+
+
+
+ interface Vlan100
+ ip address 10.100.9.2 255.255.255.252
+ no shut
+
+
+
+  !DEFAULT ROUTE VLAN 100 CONEXION EDGE1
+
+ip route 0.0.0.0 0.0.0.0 10.100.9.1

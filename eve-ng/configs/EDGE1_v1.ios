@@ -1,0 +1,85 @@
+hostname EDGE1
+no ip domain-lookup
+interface Loopback0
+ip address 191.9.157.33 255.255.255.255
+no shut
+
+
+interface g0/0
+ no shut
+interface g0/0.13
+ description MAN to WANRTR
+ encapsulation dot1Q 13
+ ip address 10.9.254.6 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ no shut
+
+!Filtrar para redistribuir apenas o /16 no OSPF MAN
+ip prefix-list HQ_SUMMARY permit 10.9.0.0/16
+route-map REDIST_HQ permit 10
+match ip address prefix-list HQ_SUMMARY
+
+router ospf 10 
+ router-id 1.1.1.1
+ area 9 authentication message-digest
+ network 10.9.254.4 0.0.0.3 area 9
+ passive-interface default
+ no passive-interface g0/0.13
+ redistribute static subnets route-map REDIST_HQ
+
+ip route 10.9.0.0 255.255.0.0 10.100.9.2
+! ================== VLAN AND HSRP ==================
+
+interface g0/1
+ no shut
+interface g0/1.100
+ encapsulation dot1Q 100
+ ip address 10.100.9.1 255.255.255.252
+ no shut
+
+
+interface g0/1.30
+ encapsulation dot1Q 30
+ ip address 217.9.160.10 255.255.255.240
+ standby version 2
+ standby 30 ip 217.9.160.14        
+ standby 30 priority 110          
+ standby 30 preempt
+exit
+
+
+! ================== BGP CONFIG ==================
+
+!BGP CONFIG
+!iBGP Paring
+!show running-config | section address-family
+!show ip bgp ummary
+!show ip bgp vpnv4 vrf INET summary
+!show ip route vrf INET 10.9.254.0 //Montrer la connexion virtuell  IBGP funcione   
+
+interface g0/0.14
+ description Link INET To EDGE1
+ encapsulation dot1Q 14
+ ip address 91.9.222.98 255.255.255.252
+ no shut
+exit
+
+ ! Subinterface para VLAN 300 (iBGP)
+interface g0/1.300
+ encapsulation dot1Q 300
+ ip address 10.9.254.1 255.255.255.252
+exit
+
+
+!EBGP Paring
+router bgp 65096
+ bgp log-neighbor-changes
+ bgp router-id 9.9.9.1
+  neighbor 10.9.254.2 remote-as 65096
+  neighbor 10.9.254.2 update-source g0/1.300
+  neighbor 10.9.254.2 activate
+  neighbor 91.9.222.97 remote-as 65090
+  neighbor 91.9.222.97 activate
+  network 217.9.160.0 mask 255.255.255.240
+  network 191.9.157.33 mask 255.255.255.255

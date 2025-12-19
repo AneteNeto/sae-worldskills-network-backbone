@@ -1,0 +1,30 @@
+hostname REMFW
+no ip domain-lookup
+
+! LAN Remote (ajusta se não for esta rede)
+interface g0/1
+ description REM LAN
+ ip address 10.9.100.126 255.255.255.128
+ no shut
+exit
+
+! Link para WANRTR (MAN)
+interface g0/0
+ description Link to WANRTR (MAN)
+ ip address 10.116.9.2 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ no shut
+exit
+
+router ospf 10 
+ router-id 4.4.4.4
+ area 9 authentication message-digest
+ network 10.116.9.0 0.0.0.3 area 9
+ network 10.9.100.0 0.0.0.127 area 9
+ passive-interface default
+ no passive-interface g0/0
+exit
+
+! Default route (VRF MAN) para WANRTR
+ip route 0.0.0.0 0.0.0.0 10.116.9.1

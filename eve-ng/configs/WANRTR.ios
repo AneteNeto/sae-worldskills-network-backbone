@@ -1,0 +1,110 @@
+hostname WANRTR
+no ip domain-lookup
+
+ip vrf MAN
+ rd 3:3
+ip vrf INET
+ rd 65090:1
+exit
+
+! Link para REMFW (MAN)  --- IMPORTANTE: na VRF MAN
+interface g0/2
+ description Link to REMFW (MAN)
+ ip vrf forwarding MAN
+ ip address 10.116.9.1 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ no shut
+
+interface g0/0
+ no shut
+interface g0/0.13
+ description Link MAN to EDGE1
+ encapsulation dot1Q 13
+ ip vrf forwarding MAN
+ ip address 10.9.254.5 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ip ospf cost 70
+ no shut
+
+interface g0/1
+ no shut
+interface g0/1.15
+ description Link MAN to EDGE2
+ encapsulation dot1Q 15
+ ip vrf forwarding MAN
+ ip address 10.9.254.9 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ ip ospf cost 50
+ no shut
+
+router ospf 10 vrf MAN
+ router-id 3.3.3.3
+ area 9 authentication message-digest
+ network 10.116.9.0 0.0.0.3 area 9
+ network 10.9.254.4 0.0.0.3 area 9
+ network 10.9.254.8 0.0.0.3 area 9
+ passive-interface default
+ no passive-interface g0/2
+ no passive-interface g0/0.13
+ no passive-interface g0/1.15
+
+! ===== EEM: reativar automaticamente interface para REMFW quando cair =====
+event manager applet REENABLE_REMFW_LINK
+ event syslog pattern "Interface FastEthernet1/0.*, changed state to down"
+ action 1.0 syslog msg "Interface have been re-enabled automatically due to down status"
+ action 2.0 cli command "enable"
+ action 3.0 cli command "conf t"
+ action 4.0 cli command "interface FastEthernet1/0"
+ action 5.0 cli command "shutdown"
+ action 6.0 cli command "no shutdown"
+ action 7.0 cli command "end"
+
+
+!
+! ============ CONF INET / eBGP ============
+!show running-config | section address-family
+!show ip bgp vpnv4 vrf INET summary
+
+
+interface g0/0.14
+ description Link INET To EDGE1
+ encapsulation dot1Q 14
+ ip vrf forwarding INET
+ ip address 91.9.222.97 255.255.255.252
+ no shut
+exit
+!
+interface g0/1.16
+ description Link INET To EDGE2
+ encapsulation dot1Q 16
+ ip vrf forwarding INET
+ ip address 31.9.126.13 255.255.255.252
+ no shut
+exit
+!
+router bgp 65090
+ bgp router-id 9.9.9.3
+ address-family ipv4 vrf INET
+  neighbor 91.9.222.98 remote-as 65096
+  neighbor 31.9.126.14 remote-as 65096
+  neighbor 91.9.222.98 activate
+  neighbor 31.9.126.14 activate
+  network 31.9.126.12 mask 255.255.255.252
+  network 91.9.222.96 mask 255.255.255.252
+  network 8.8.9.0 mask 255.255.255.248
+  network 217.9.160.0 mask 255.255.255.240
+  bgp router-id 9.9.9.3
+exit
+!
+end
+
+! ============ INTERNET SITE ============
+
+interface g0/3
+ description Link to INTERNET
+ ip vrf forwarding INET
+ ip address 8.8.9.6 255.255.255.248
+ no shut

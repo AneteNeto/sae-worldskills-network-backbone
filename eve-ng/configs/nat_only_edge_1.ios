@@ -1,0 +1,29 @@
+! INSIDE LAN ->CORE
+interface g0/1.100
+ description to CORESW1
+ ip nat inside
+
+! DMZ  217.9.160.14
+interface g0/1.30
+ description Public DMZ subnet
+ ip nat inside
+!
+! OUTSIDE = lien ->“WANRTR-INET
+interface g0/0.14
+ description to WANRTR (INET)
+ ip nat outside
+
+ !PAT (LAN → Internet)
+ip access-list extended PAT
+permit ip 10.9.0.0 0.255.255.255 any 
+deny any
+
+permit 10.9.0.0 0.0.255.255 any
+ip nat inside source list PAT interface g0/0.14 overload
+
+! VPN 4443 -> HQINFRASRV:4443
+ip nat inside source static tcp 10.9.10.2 4443 191.9.157.33 4443
+! Webmail 80/443 -> HQMAILSRV
+ip nat inside source static tcp 10.9.10.3 80  191.9.157.33 80
+ip nat inside source static tcp 10.9.10.3 443 191.9.157.33 443
+

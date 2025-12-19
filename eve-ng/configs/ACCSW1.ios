@@ -1,0 +1,53 @@
+hostname ACCSW1
+!
+no ip domain-lookup 
+
+vtp domain wsl2025.org
+vtp mode client
+vtp version 2
+vtp password P@ssw0rd
+
+
+interface e0/0  
+ description LINK TO CORESW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+exit
+
+interface e0/1  
+ description LINK TO CORESW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+exit
+
+
+interface e1/0
+ switchport mode access
+ switchport access vlan 10
+ no shut
+exit
+
+interface e0/2
+ switchport mode access
+ switchport access vlan 20
+ no shut
+exit
+
+interface e1/1
+ switchport mode access
+ switchport access vlan 30
+ no shut
+exit
+
+interface e0/3
+ switchport mode access
+ switchport access vlan 99
+ no shut
+exit
+
+
+

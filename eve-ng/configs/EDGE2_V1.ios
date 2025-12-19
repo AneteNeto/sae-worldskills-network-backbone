@@ -1,0 +1,83 @@
+!
+hostname EDGE2
+!
+no ip domain-lookup 
+
+!OSPF CONFIG
+interface g0/0
+ no shut
+interface g0/0.15
+ description LINK MAN To WANRTR
+ encapsulation dot1Q 15
+ ip address 10.9.254.10 255.255.255.252
+ ip ospf message-digest-key 1 md5 OnlyMan
+ ip ospf network point-to-point
+ no shut
+exit
+
+!Filtrar para redistribuir apenas o /16 no OSPF MAN
+ip prefix-list HQ_SUMMARY permit 10.9.0.0/16
+route-map REDIST_HQ permit 10
+match ip address prefix-list HQ_SUMMARY
+
+!
+router ospf 10
+ router-id 2.2.2.2  
+ area 9 authentication message-digest
+ network 10.9.254.8 0.0.0.3 area 9
+ passive-interface default
+ no passive-interface g0/0.15
+ redistribute static subnets route-map REDIST_HQ
+ exit
+
+ ip route 10.9.0.0 255.255.0.0 10.9.200.2
+! ================== VLAN AND HSRP ==================
+
+interface g0/1
+ no shut
+
+! Link L3 para o CORESW2
+interface g0/1.200
+ encapsulation dot1Q 200
+ ip address 10.9.200.1 255.255.255.252
+exit
+
+!HSRP
+interface g0/1.30
+ encapsulation dot1Q 30
+ ip address 217.9.160.11 255.255.255.240
+ standby version 2
+ standby 30 ip 217.9.160.14      
+ standby 30 priority 100          
+ standby 30 preempt
+exit
+
+! ================== BGP CONFIG ==================
+
+! Subinterface para VLAN 300 (iBGP)
+interface g0/1.300
+ encapsulation dot1Q 300
+ ip address 10.9.254.2 255.255.255.252
+exit
+
+!BGP
+!
+interface g0/0.16
+ description Link INET To EDGE2
+ encapsulation dot1Q 16
+ ip address 31.9.126.14 255.255.255.252
+ no shut
+exit
+!
+
+router bgp 65096
+bgp log-neighbor-changes  
+bgp router-id 9.9.9.2 
+neighbor 10.9.254.1 remote-as 65096
+neighbor 10.9.254.1 update-source g0/1.300
+neighbor 10.9.254.1 activate 
+neighbor 31.9.126.13 remote-as 65090     
+neighbor 31.9.126.13 activate
+network 31.9.126.12 mask 255.255.255.252
+network 191.9.157.2 mask 255.255.255.255
+network 217.9.160.0  mask 255.255.255.240

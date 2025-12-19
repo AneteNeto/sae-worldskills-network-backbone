@@ -1,0 +1,109 @@
+!
+hostname CORESW2
+!
+no ip domain-lookup 
+
+vtp domain wsl2025.org
+vtp mode server
+vtp version 2
+vtp password P@ssw0rd
+
+vlan 10
+ name Servers
+vlan 20
+ name Clients
+vlan 30
+ name DMZ
+vlan 99
+ name Management
+vlan 100
+ name COREDGE1
+vlan 200
+ name COREDGE2
+vlan 300
+ name IBGP
+vlan 666
+ name Blackhole
+exit
+
+
+ !ACTIVER LAG 
+ !show interfaces trunk
+
+interface range e0/1-2
+ channel-group 1 mode active
+ no shut
+exit
+
+ interface Port-channel1
+ description Trunk LAG to CORESW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99,300
+ exit
+
+
+interface e0/0
+ description Trunk  to EDGE1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 30,200,300
+ no shut
+exit
+
+interface e0/3
+ description Trunk  to ACCSW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+exit
+interface e1/0
+ description Trunk  to ACCSW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk native vlan 666
+ switchport trunk allowed vlan 10,20,30,99
+ no shut
+exit
+
+
+ !DEFAULT ROUTE VLAN 100 CONEXION EDGE1
+ ip route 0.0.0.0 0.0.0.0 10.9.200.1
+
+  interface Vlan 200
+ ip address 10.9.200.2 255.255.255.252
+ no shut
+
+ !HSRP CONFIG
+ !DEBUG (n'est pas oublier de mettre no shut sur les interface vlan)
+ !show ip interface brief | include Vlan20|Vlan99|vlan10
+ !show standby brief
+  ! VLAN 10
+interface Vlan10
+ ip address 10.9.10.11 255.255.255.224
+ standby 10 ip 10.9.10.30
+ standby 10 priority 100
+ standby 10 preempt
+ no shut
+
+! VLAN 20
+interface Vlan20
+ ip address 10.9.20.11 255.255.254.0
+ standby 20 ip 10.9.21.254
+ standby 20 priority 100
+ standby 20 preempt
+
+! VLAN 99
+interface Vlan99
+ ip address 10.9.99.11 255.255.255.0
+ standby 99 ip 10.9.99.254
+ standby 99 priority 100
+ standby 99 preempt
