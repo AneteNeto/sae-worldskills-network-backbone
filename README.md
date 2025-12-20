@@ -2,7 +2,8 @@
 ### 🌐 WorldSkills-inspired IT Network Systems Administration Project
 
 <p align="center">
-  <img src="./eve-ng/eve-ng-topology.png" width="100%" alt="EVE-NG Network Topology"/>
+  <img src="./eve-ng/BACKBONE.jpg" width="70%" alt="EVE-NG Network Topology"/>
+  <img src="./eve-ng/eve-ng-topology.png" width="70%" alt="EVE-NG Network Topology"/>
 </p>
 
 ---
